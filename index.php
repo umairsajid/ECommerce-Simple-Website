@@ -1,59 +1,63 @@
 <?php 
-// Connect to the MySQL database  
-include "storescripts/connect_to_mysql.php"; 
-$dynamicList = "";
-$sql = mysql_query("SELECT * FROM products ORDER BY date_added DESC LIMIT 6");
-$productCount = mysql_num_rows($sql); // count the output amount
-if ($productCount > 0) {
-	while($row = mysql_fetch_array($sql)){ 
-             $id = $row["id"];
-			 $product_name = $row["product_name"];
-			 $price = $row["price"];
-			 $date_added = strftime("%b %d, %Y", strtotime($row["date_added"]));
-			 $dynamicList .= '<table width="100%" border="0" cellspacing="0" cellpadding="6">
-        <tr>
-          <td width="17%" valign="top"><a href="product.php?id=' . $id . '"><img style="border:#666 1px solid;" src="inventory_images/' . $id . '.jpg" alt="' . $product_name . '" width="77" height="102" border="1" /></a></td>
-          <td width="83%" valign="top">' . $product_name . '<br />
-            $' . $price . '<br />
-            <a href="product.php?id=' . $id . '">View Product Details</a></td>
-        </tr>
-      </table>';
-    }
-} else {
-	$dynamicList = "We have no products listed in our store yet";
+session_start();
+if (!isset($_SESSION["manager"])) {
+    header("location: admin_login.php"); 
+    exit();
 }
-mysql_close();
+
+// Be sure to check that this manager SESSION value is in fact in the database
+$managerID = preg_replace('#[^0-9]#i', '', $_SESSION["id"]); // filter everything but numbers and letters
+$manager = preg_replace('#[^A-Za-z0-9]#i', '', $_SESSION["manager"]); // filter everything but numbers and letters
+$password = preg_replace('#[^A-Za-z0-9]#i', '', $_SESSION["password"]); // filter everything but numbers and letters
+
+// Run mySQL query to be sure that this person is an admin and that their password session var equals the database information
+// Connect to the MySQL database  
+include "../storescripts/connect_to_mysql.php"; 
+$sql = mysql_query("SELECT * FROM admin WHERE id='$managerID' AND username='$manager' AND password='$password' LIMIT 1"); // query the person
+// ------- MAKE SURE PERSON EXISTS IN DATABASE ---------
+$existCount = mysql_num_rows($sql); // count the row nums
+if ($existCount == 0) { // evaluate the count
+	 echo "Your login session data is not on record in the database.";
+     exit();
+}
 ?>
 <html>
 <head>
-<title>Extreme Watches HomePage</title>
-<link rel="stylesheet" href="style/style.css" type="text/css" media="screen" />
+<title>Store Admin Area</title>
+<link rel="stylesheet" href="../style/style.css" type="text/css" media="screen" />
+<style>
+body{
+    background-image:url("style/bg.jpg");
+}
+</style>
 </head>
+
 <body>
 <div align="center" id="mainWrapper">
-  <?php include_once("template_header.php");?>
-  <div id="pageContent">
-  <table width="100%" border="0" cellspacing="0" cellpadding="10">
-  <tr>
-    <td width="32%" valign="top"><h3>CSD2000</h3>
-      <p>This website is being developed for the Course Work 3 Database Design and it involves PHP and MySQL Knowledge. <br />
-      </p>
-      <p>It is not an actual E Commerce Store but developed for an Academic project <br />
-        <br />
-        Do Navigate Through The Cart and Only Admin can Add Products to the Website </p></td>
-    <td width="35%" valign="top"><h3>Latest Watches Available</h3>
-      <p><?php echo $dynamicList; ?><br />
-        </p>
-      <p><br />
-      </p></td>
-    <td width="33%" valign="top"><h3>Website Content</h3>
-      <p>The Check out Process is not implemented. If we want to implement the check out process we should have a marchent account on Paypal. 
-      However we have included Check out Button. </p></td>
-  </tr>
-</table>
 
+<div id="pageHeader"><table width="100%" border="0" cellspacing="0" cellpadding="12">
+  <tr>
+    <td width="32%"><a href="../index.php"><img src="../style/logo.jpg" alt="Logo" width="252" height="36" border="0" /></a></td>
+    <td width="68%" align="right"><a href="../cart.php">Your Cart</a></td>
+  </tr>
+  <tr>
+    <td colspan="2"><a href="../index.php">Home</a> &nbsp; &middot; &nbsp; <a href="../product.php">Products</a> &nbsp; &middot; &nbsp; <a href="../help.php">Help</a> &nbsp; &middot; &nbsp; <a href="../contact.php">About Us</a></td>
+    </tr>
+  </table>
+</div>
+
+  <div id="pageContent"><br />
+    <div align="left" style="margin-left:24px;">
+      <h2>Hello store manager, what would you like to do today?</h2>
+      <p><a href="inventory_list.php">Manage Watches Inventory</a><br />
+      </p>
+    </div>
+    <br />
+  <br />
+  <br />
   </div>
-  <?php include_once("template_footer.php");?>
+  <?php include_once("../template_footer.php");?> 
+
 </div>
 </body>
 </html>
